@@ -2,6 +2,8 @@ from datetime import datetime
 from zoneinfo import ZoneInfo
 import math
 
+BASE_LEVEL = 0.64
+
 def local_hour(dt_utc: datetime, tz_name: str) -> float:
     """Возвращает местное время в виде дробного числа часов."""
     if dt_utc.tzinfo is None or dt_utc.utcoffset() is None:
@@ -37,8 +39,8 @@ def demand_multiplier(dt_utc: datetime, tz_name: str) -> float:
     evening_factor = math.exp(-((hour - 18.5) ** 2) / (2.0 * 1.5 ** 2))
 
     # Добавляем два пика
-    demand += 0.3 * morning_factor
-    demand += 0.6 * evening_factor
+    demand += 0.5 * morning_factor
+    demand += 0.65 * evening_factor
 
     # Пятница и суббота
     if weekday in (4, 5):
@@ -48,4 +50,4 @@ def demand_multiplier(dt_utc: datetime, tz_name: str) -> float:
     if weekday == 6:
         demand -= 0.15 * morning_factor
 
-    return max(demand, 0.01)
+    return max(demand, 0.01) / BASE_LEVEL
