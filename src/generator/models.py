@@ -22,26 +22,28 @@ class ZoneType(StrEnum):
     INDUSTRIAL = "industrial"
 
 
-class TripStatus(StrEnum):
-    COMPLETED = "completed"
-    CANCELLED = "cancelled"
-    NO_SHOW = "no_show"
+class TripStatus(IntEnum):
+    COMPLETED = 1
+    CANCELLED = 2
+    NO_SHOW = 3
 
 
 @dataclass(frozen=True, slots=True)
 class Driver:
     driver_id: int
     full_name: str
-    home_city: str
+    home_city_id: int
     vehicle_class: str
-    rating: float
+    driver_rating: float
     registered_at: datetime
 
     def __post_init__(self) -> None:
         if self.driver_id <= 0:
             raise ValueError(f"Invalid driver_id: {self.driver_id}")
-        if not 1 <= self.rating <= 5:
-            raise ValueError("Rating must be between 1 and 5")
+        if self.home_city_id <= 0:
+            raise ValueError(f"Home City id must be positive")
+        if not 1 <= self.driver_rating <= 5:
+            raise ValueError("Driver rating must be between 1 and 5")
 
 
 @dataclass(frozen=True, slots=True)
@@ -100,6 +102,18 @@ class ServiceTypeInfo:
 
 
 @dataclass(frozen=True, slots=True)
+class TripStatusInfo:
+    status_id: int
+    status_name: str
+
+    def __post_init__(self) -> None:
+        if self.status_id <= 0:
+            raise ValueError(f"Invalid status_id: {self.status_id}")
+        if not self.status_name.strip():
+            raise ValueError("Status name must not be empty")
+
+
+@dataclass(frozen=True, slots=True)
 class Trip:
     trip_id: UUID
     started_at: datetime
@@ -108,18 +122,18 @@ class Trip:
     pickup_zone_id: int
     dropoff_zone_id: int
     service_type_id: ServiceType
-    status: TripStatus
+    status_id: TripStatus
     distance_km: float
     duration_min: float
     surge: float
     fare: float
     tip: float
-    rating: int
+    trip_rating: int
     is_anomaly: bool
 
     def __post_init__(self) -> None:
-        if not 0 <= self.rating <= 5:
-            raise ValueError("Rating must be between 0 and 5")
+        if not 0 <= self.trip_rating <= 5:
+            raise ValueError("Trip rating must be between 0 and 5")
         if self.city_id <= 0:
             raise ValueError("City id must be positive")
         if self.driver_id <= 0:
@@ -140,5 +154,5 @@ class Trip:
             raise ValueError("Distance must be positive")
         if self.duration_min <= 0:
             raise ValueError("Duration min must be positive")
-        if self.status != TripStatus.COMPLETED and (self.fare != 0 or self.tip != 0 or self.rating != 0):
+        if self.status_id != TripStatus.COMPLETED and (self.fare != 0 or self.tip != 0 or self.trip_rating != 0):
             raise ValueError("Only completed trips can have fare, tip or rating")
