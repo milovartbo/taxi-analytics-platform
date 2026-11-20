@@ -6,7 +6,8 @@ from generator.models import (
     ServiceType,
     ServiceTypeInfo,
     Zone,
-    ZoneType
+    ZoneType, TripStatus,
+    TripStatusInfo
 )
 
 _ZoneTemplate = tuple[str, ZoneType]
@@ -87,8 +88,11 @@ _CITY_TEMPLATES: dict[str, _CityTemplate] = {
         ),
     ),
 }
-
-
+_TRIP_STATUSES: tuple[TripStatusInfo, ... ] = (
+    TripStatusInfo(status_id=TripStatus.COMPLETED, status_name="completed"),
+    TripStatusInfo(status_id=TripStatus.CANCELLED, status_name="cancelled"),
+    TripStatusInfo(status_id=TripStatus.NO_SHOW, status_name="no_show"),
+)
 _SERVICE_TYPES: tuple[ServiceTypeInfo, ...] = (
     ServiceTypeInfo(
         service_type_id=ServiceType.ECONOMY,
@@ -116,8 +120,10 @@ _SERVICE_TYPES: tuple[ServiceTypeInfo, ...] = (
     ),
 )
 
+
 class CityCatalog:
     """Каталог городов и районов для генерации поездок."""
+
     def __init__(self, city_names: list[str]) -> None:
         self._cities: list[City] = []
         self._zones: list[Zone] = []
@@ -180,13 +186,14 @@ class CityCatalog:
         )[0]
 
     def pick_zones(
-        self,
-        city_id: int,
-        rng: random.Random,
+            self,
+            city_id: int,
+            rng: random.Random,
     ) -> tuple[int, int]:
         """Выбирает районы отправления и назначения одного города."""
+        if city_id not in self._zones_by_city:
+            raise ValueError("Unknown city_id")
         city_zones = self.zones_of(city_id)
-
         if len(city_zones) < 2:
             raise ValueError(f"City {city_id} must have at least 2 zones")
 
@@ -208,3 +215,5 @@ class CityCatalog:
 def service_types() -> list[ServiceTypeInfo]:
     """Возвращает доступные типы сервиса."""
     return list(_SERVICE_TYPES)
+def trip_statuses() -> list[TripStatusInfo]:
+    return list(_TRIP_STATUSES)
