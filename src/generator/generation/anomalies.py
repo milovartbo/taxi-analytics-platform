@@ -28,3 +28,4 @@ class AnomalyPolicy:
             return self._rng.choice(list(AnomalyKind))
 
         return None
+
