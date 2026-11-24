@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from datetime import datetime
 
 from generator.generation.pricing import fare
-from generator.models import City, ServiceTypeInfo
+from generator.models import City, ServiceTypeInfo, TripStatus
 
 
 @dataclass(frozen=True, slots=True)
@@ -106,7 +106,7 @@ class StatusPicker:
         self._no_show = no_show
         self._surge_sensitivity = surge_sensitivity
 
-    def sample(self, ctx: TripContext, rng: random.Random) -> str:
+    def sample(self, ctx: TripContext, rng: random.Random) -> TripStatus:
         roll = rng.random()
         cancel_p = self._base_cancel + self._surge_sensitivity * max(
             0.0, ctx.surge - 1.0
@@ -117,10 +117,10 @@ class StatusPicker:
             no_show_p = max(0.0, 1.0 - cancel_p)
 
         if roll < cancel_p:
-            return "cancelled"
+            return TripStatus.CANCELLED
         if roll < cancel_p + no_show_p:
-            return "no_show"
-        return "completed"
+            return TripStatus.NO_SHOW
+        return TripStatus.COMPLETED
 
 
 class RatingPicker:
@@ -132,9 +132,9 @@ class RatingPicker:
     def sample(self, ctx: TripContext, rng: random.Random) -> int:
         has_rating = rng.random() >= self._no_rating
         is_low = rng.random() < self._low_rating
-
+        low_value = rng.choice([1, 2, 3, 3, 4, 4, 4])
         if not has_rating:
             return 0
         if is_low:
-            return rng.choice([1, 2, 3, 3, 4, 4, 4])
+            return low_value
         return 5
